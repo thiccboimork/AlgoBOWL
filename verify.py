@@ -1,5 +1,6 @@
 import networkx as nx
 
+
 def read_input_file(filename):
     with open(filename, 'r') as f:
         num_nodes = int(f.readline().strip())
@@ -12,25 +13,25 @@ def read_input_file(filename):
 
         return num_nodes, graph
 
+
 def remove_nodes_and_verify_dag(graph, nodes_to_remove):
     modified_graph = graph.copy()
     modified_graph.remove_nodes_from(nodes_to_remove)
-    
+
     is_dag = nx.is_directed_acyclic_graph(modified_graph)  # Check if the modified graph is a DAG
-    
+
     print("Is DAG:", is_dag)
     return is_dag
 
-def write_output_file(output_filename, num_nodes_removed, nodes_removed):
-    with open(output_filename, 'w') as f:
-        f.write(f"{num_nodes_removed}\n")
-        f.write(" ".join(map(str, nodes_removed)))
 
 if __name__ == "__main__":
     # Input parameters
-    input_filename = "graph.txt"
-    output_filename = "output.txt"
-    nodes_to_remove = [1, 10, 15, 16, 3, 8, 9, 2, 4, 171, 5]  # Specify nodes to remove
+    input_filename = "sample.txt"
+
+    with open("output.txt", 'r') as f:
+        num_nodes = int(f.readline().strip())
+        nodes_to_remove = f.readline().split()
+        nodes_to_remove = [int(i) for i in nodes_to_remove]
 
     # Read input file
     num_nodes, graph = read_input_file(input_filename)
@@ -41,6 +42,6 @@ if __name__ == "__main__":
     # Output result
     num_nodes_removed = len(nodes_to_remove)
     if is_dag_result:
-        write_output_file(output_filename, num_nodes_removed, nodes_to_remove)
+        print("The resulting graph is a DAG.")
     else:
         print("The resulting graph is not a DAG.")

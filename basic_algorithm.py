@@ -15,11 +15,6 @@ def read_input_file(filename):
         return num_nodes, graph
 
 
-def find_cycles(graph):
-    cycles = list(nx.simple_cycles(graph))
-    return cycles
-
-
 def classes_to_test_out_of(graph, cycles):
     class_cycle_count = {node: 0 for node in graph.nodes()}
 
@@ -33,33 +28,29 @@ def classes_to_test_out_of(graph, cycles):
     return classes_to_test
 
 
-def remove_node_and_reevaluate(graph, node):
-    # Remove the node and its edges
-    graph.remove_node(node)
-    # Reevaluate cycles in the updated graph
-    cycles = find_cycles(graph)
-    # Determine classes to test out of
-    classes_to_test = classes_to_test_out_of(graph, cycles)
-    return classes_to_test
-
 if __name__ == "__main__":
-    filename = "graph.txt" 
+    filename = "sample.txt"
     num_nodes, graph = read_input_file(filename)
 
     removed_nodes = []
-
-    while True:
-        # Find cycles in the graph
-        cycles = find_cycles(graph)
-        if not cycles:
-            print(len(removed_nodes))
-            print(" ".join(map(str, removed_nodes)))
-            break
+    test_out = list(nx.simple_cycles(graph))
+    classes_to_test = []
+    while len(test_out) > 0:
 
         # Determine classes to test out of
-        classes_to_test = classes_to_test_out_of(graph, cycles)
+        classes_to_test = classes_to_test_out_of(graph, test_out)
 
-        # Remove a node (for example, the first node in the list)
+        # Remove first node in list
         node_to_remove = classes_to_test[0]
         removed_nodes.append(node_to_remove)
-        remove_node_and_reevaluate(graph, node_to_remove)
+        graph.remove_node(node_to_remove)
+
+        # see how many cycles are left now
+        test_out = list(nx.simple_cycles(graph))
+
+    with open("output.txt", 'w') as f:
+        f.write(f"{len(removed_nodes)}\n")
+        f.write(" ".join(map(str, removed_nodes)))
+
+    print(len(removed_nodes))
+    print(removed_nodes)
