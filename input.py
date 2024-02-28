@@ -17,13 +17,19 @@ import functools, itertools
 import networkx as NX
 
 # seed the random generator for reproducability
-seed = 0
+seed = 1
 random.seed(seed)
+
+# official AlgoBOWL input restrictions
+MAX_NODES = 10**4
+MAX_EDGES = 10**5
+
 
 def show(graph):
     import matplotlib.pyplot as plt
     NX.draw(graph)
     plt.show()
+
 
 # Convert a NetworkX directed graph
 # into a valid input file string
@@ -34,10 +40,10 @@ def create_input(graph):
     nodes = [*graph.nodes]
     random.shuffle(nodes)
     graph = NX.relabel_nodes(graph, {
-        node : i+1
+        node: i+1
         for i, node
         in enumerate(nodes)
-    }, copy = True)
+    }, copy=True)
     # build each node's the prerequisite list, prepended by its length
     reqs = (
         [len(req)] + req
@@ -56,6 +62,7 @@ def create_input(graph):
 )}
     '''.strip()+'\n'
 
+
 def verify_input(filename, nodes, edges):
     graph = NX.DiGraph()
     with open(filename) as f:
@@ -70,6 +77,7 @@ def verify_input(filename, nodes, edges):
             graph.add_edges_from((prereq, myclass) for prereq in prereqs)
     assert nodes == graph.number_of_nodes()
     assert edges == graph.number_of_edges()
+
 
 # get the disjoint union of multiple graphs
 def union(graphs):
@@ -92,6 +100,7 @@ def union(graphs):
 # as we can by starting with a set candidates and the cycles they
 # would break, and generating a minimal graph based on that
 
+
 # just a namespace for various subgraph generators
 class Gen:
     # generate from cycle/candidate set.
@@ -110,35 +119,49 @@ class Gen:
             newp = i/len(cycles)
             if newp > (lastp + 0.05):
                 lastp = int(20 * newp) / 20
-                print (f'Generating from cycles: {int(newp*100)}%')
-            inds = [i for i in range(cands) if cycle&(1<<i)]
+                print(f'Generating from cycles: {int(newp*100)}%')
+            inds = [i for i in range(cands) if cycle & (1 << i)]
             graph.add_edges_from(zip(inds, inds[1:]+inds[:1]))
         return graph
+    
     # already acyclic
     def edgeless(n):
         graph = NX.DiGraph()
         graph.add_nodes_from(range(n))
         return graph
+
     # double a graph n times, so it has 2**n times as many nodes
     def double(graph, n):
         for _ in range(n):
             graph = union((graph, graph))
         return graph
+
     # minimum removal: 1 node
     def cycle(n):
         return NX.cycle_graph(n, NX.DiGraph)
+
     # minimum removal: n-1 if remove == 0
     # remove takes that many edges away randomly
-    def complete(n, remove = 0):
-        graph = NX.complete_graph(n, NX.DiGraph)
-        # we prefer removing lower-numbered edges so
-        # the edge count distribution is more uneven
-        rem_ind = lambda: int(n*(random.random()**2))
-        for _ in range(remove):
-            try:
-                graph.remove_edge(rem_ind(), rem_ind())
-            except:
-                pass # ignore edges already gone
+    def complete(n, remove=0):
+        graph = NX.DiGraph()
+        graph.add_nodes_from(range(n))
+        # Calculate the maximum possible number of edges in a directed graph with n nodes
+        max_edges = n * (n - 1)
+        # Ensure that remove does not exceed the maximum possible edges
+        remove = min(remove, max_edges)
+        # Limit the number of edges added in each iteration to prevent exceeding MAX_EDGES
+        max_edges_per_iteration = min(n, MAX_EDGES // n)  # Calculate the maximum edges per iteration
+        # Connect nodes randomly without allowing self-loops
+        for i in range(n):
+            neighbors = list(range(n))
+            neighbors.remove(i)  # Exclude the current node from the list of neighbors
+            # Randomly select edges until the desired number is reached
+            for _ in range(min(remove, max_edges_per_iteration)):
+                if neighbors:  # Check if there are still potential neighbors available
+                    j = random.choice(neighbors)
+                    graph.add_edge(i, j)
+                    neighbors.remove(j)  # Remove the chosen neighbor to avoid duplication
+                    remove -= 1  # Decrease the remaining edges to be added
         return graph
     # 2n x 2n toroidal lattice graph in which
     # each grid cell is a cycle in the opposite
@@ -149,16 +172,17 @@ class Gen:
         graph = NX.DiGraph()
         graph.add_edges_from((
             # connect points toroidally
-            ((x, y), ((x+dx)%size, (y+dy)%size))
+            ((x, y), ((x+dx) % size, (y+dy) % size))
             # iterate all grid points in the space
-            for (x, y) in itertools.product(range(size), repeat = 2)
+            for (x, y) in itertools.product(range(size), repeat=2)
             # go either left/right or up/down
             for (dx, dy) in (
                 ((1, 0), (-1, 0)),
                 ((0, 1), (0, -1))
-            )[(x+y)%2]
+            )[(x+y) % 2]
         ))
         return graph
+
     # cycles of various sizes all with one shared node
     # minimum removal: 1
     def flower(sizes):
@@ -172,22 +196,25 @@ class Gen:
             for i, cycle in enumerate(cycles)
         )
         return functools.reduce(NX.compose, cycles)
+
     # random graph with node and edge count
     def random(nodes, edges):
         graph = NX.DiGraph()
         graph.add_edges_from(
-            (i%nodes+1, random.randint(1,nodes))
+            (i % nodes+1, random.randint(1, nodes))
             for i in range(edges)
         )
         return graph
 
+
 # random cycle/candidate set, represented as a list
 # of cycle bitsets with 1s for each candidate it includes
 def make_cycles(cycles, cands):
-    bit_chance = lambda bits, chance: sum(1<<i for i in range(bits) if random.random()<chance)
+    bit_chance = lambda bits, chance: sum(1 << i for i in range(bits) if random.random() < chance)
     # here, every candidate/cycle connection has a 0.4% chance,
     # for cycles of an average length 24 with 6000 candidate nodes
     return [bit_chance(cands, 0.004) for _ in range(cycles)]
+
 
 # create the cycle/candidate set to generate from
 # this will generate 6000 nodes and ??? edges
@@ -210,7 +237,7 @@ pattern = [
     # minimal 1/4 must be removed
     (Gen.chess, 16),
     # min removal again 1, test cycle overlap detection
-    (Gen.flower, [2,3,4]*10+list(range(5, 40, 5))),
+    (Gen.flower, [2, 3, 4]*10+list(range(5, 40, 5))),
     # meant to compress maximum problem complexity
     # into the given number of nodes
     (Gen.from_cycles, cycles, cands),
@@ -230,40 +257,41 @@ pattern = [
 #  - 1536 nodes in 256 3-cycles and 256 fully-connected triangles
 #  - (546 nodes will be filled in randomly)
 
-# official AlgoBOWL input restrictions
-MAX_NODES = 10**4
-MAX_EDGES = 10**5
+
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('filename')
     args = parser.parse_args()
-    print (f'Random was seeded with {seed}')
+    print(f'Random was seeded with {seed}')
     # generate all graphs and combine
     graphs = (
         pat[0](*pat[1:])
         for pat in pattern
     )
-    print ('Generating and combining subgraphs...')
+    print('Generating and combining subgraphs...')
     combined = union(graphs)
     nodes = combined.number_of_nodes()
     edges = combined.number_of_edges()
-    print (f'Built a graph with {nodes} nodes and {edges} edges')
+    print(f'Built a graph with {nodes} nodes and {edges} edges')
     # fill in extra space randomly
-    print (f'Filling in randomly...')
+    print('Filling in randomly...')
     if nodes < MAX_NODES:
         combined = union((combined, Gen.random(MAX_NODES-nodes, MAX_EDGES-edges)))
     # check input restrictions
     nodes = combined.number_of_nodes()
     edges = combined.number_of_edges()
-    print (f'Graph now contains {nodes} nodes and {edges} edges')
+    print(f'Graph now contains {nodes} nodes and {edges} edges')
     assert nodes <= MAX_NODES and edges <= MAX_EDGES
     # write the formatted input to the provided file
-    print ('Writing file...')
+    print('Writing file...')
     with open(args.filename, 'w') as f:
         f.write(create_input(combined))
-    print ('Verifying input file...')
+    print('Verifying input file...')
     verify_input(args.filename, nodes, edges)
-    print ('Done')
+    print('Done')
+
+
 if __name__ == '__main__':
     main()

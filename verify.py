@@ -16,9 +16,10 @@ def read_input_file(filename):
 
 def remove_nodes_and_verify_dag(graph, nodes_to_remove):
     modified_graph = graph.copy()
-    modified_graph.remove_nodes_from(nodes_to_remove)
+    for i in nodes_to_remove:
+        modified_graph.remove_node(i)
 
-    is_dag = nx.is_directed_acyclic_graph(modified_graph)  # Check if the modified graph is a DAG
+    is_dag = nx.is_directed_acyclic_graph(modified_graph)
 
     print("Is DAG:", is_dag)
     return is_dag
@@ -26,7 +27,7 @@ def remove_nodes_and_verify_dag(graph, nodes_to_remove):
 
 if __name__ == "__main__":
     # Input parameters
-    input_filename = "sample.txt"
+    input_filename = "graph.txt"
 
     with open("output.txt", 'r') as f:
         num_nodes = int(f.readline().strip())

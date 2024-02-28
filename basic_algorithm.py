@@ -29,7 +29,7 @@ def classes_to_test_out_of(graph, cycles):
 
 
 if __name__ == "__main__":
-    filename = "sample.txt"
+    filename = "graph.txt"
     num_nodes, graph = read_input_file(filename)
 
     removed_nodes = []
