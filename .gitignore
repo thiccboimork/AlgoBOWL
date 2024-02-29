@@ -163,3 +163,6 @@ cython_debug/
 ../C11C-DrawPlay/
 ../CSCI 303/
 ../CSCI 306/
+
+output/all_inputs.zip
+output/algo/target
