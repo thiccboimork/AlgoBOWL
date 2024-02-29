@@ -85,3 +85,7 @@ for path in sorted(paths):
     removed = [node for node in graph.nodes if node not in sub.nodes]
     print (len(removed))
     print (' '.join(map(str, removed)))
+
+    with open("output.txt", 'w') as f:
+        f.write(f"{len(removed)}\n")
+        f.write(" ".join(map(str, removed)))
