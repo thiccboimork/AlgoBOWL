@@ -135,7 +135,7 @@ def build_sub(graph):
 
 #paths = (os.path.join('inputs', p) for p in os.listdir('inputs'))
 paths = [f'inputs/input_group{number}.txt']
-pathout = 'inputs/output_group{number}.txt'
+pathout = f'inputs/output_group{number}.txt'
 for path in sorted(paths):
     graph = read_graph(path)
 #    graph = nx.complete_graph(20, nx.DiGraph)
