@@ -166,3 +166,4 @@ cython_debug/
 
 output/all_inputs.zip
 output/algo/target
+output/inputs/output_*
